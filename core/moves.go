@@ -18,9 +18,62 @@ func PseudoLegalMoves(s GameState, from Square) []Move {
 		return queenPseudoLegalMoves(s.Board, from, p.Color)
 	case Rook:
 		return rookPseudoLegalMoves(s.Board, from, p.Color)
+	case Bishop:
+		return bishopPseudoLegalMoves(s.Board, from, p.Color)
+	case Knight:
+		return knightPseudoLegalMoves(s.Board, from, p.Color)
 	default:
 		return nil
 	}
+}
+
+// knightPseudoLegalMoves enumerates all L-shaped jump targets, dropping off-board
+// destinations and squares occupied by same-colour pieces. Knights ignore blockers.
+func knightPseudoLegalMoves(b Board, from Square, mover Color) []Move {
+	moves := make([]Move, 0, 8)
+	for _, d := range [8][2]int{{1, 2}, {1, -2}, {-1, 2}, {-1, -2}, {2, 1}, {2, -1}, {-2, 1}, {-2, -1}} {
+		tf := int(from.File) + d[0]
+		tr := int(from.Rank) + d[1]
+		if tf < 0 || tf > 7 || tr < 0 || tr > 7 {
+			continue
+		}
+		target := b[tr][tf]
+		if target != nil && target.Color == mover {
+			continue
+		}
+		moves = append(moves, Move{
+			From: from,
+			To:   Square{File: uint8(tf), Rank: uint8(tr)},
+		})
+	}
+	return moves
+}
+
+// bishopPseudoLegalMoves slides along the 4 diagonal rays until blocked by the
+// board edge, a same-colour piece (excluded), or an enemy piece (captured, then stops).
+func bishopPseudoLegalMoves(b Board, from Square, mover Color) []Move {
+	moves := make([]Move, 0, 13)
+	for _, d := range [4][2]int{{1, 1}, {1, -1}, {-1, 1}, {-1, -1}} {
+		for step := 1; ; step++ {
+			tf := int(from.File) + d[0]*step
+			tr := int(from.Rank) + d[1]*step
+			if tf < 0 || tf > 7 || tr < 0 || tr > 7 {
+				break
+			}
+			target := b[tr][tf]
+			if target != nil && target.Color == mover {
+				break
+			}
+			moves = append(moves, Move{
+				From: from,
+				To:   Square{File: uint8(tf), Rank: uint8(tr)},
+			})
+			if target != nil {
+				break
+			}
+		}
+	}
+	return moves
 }
 
 // queenPseudoLegalMoves slides along all 8 directions until blocked by the
