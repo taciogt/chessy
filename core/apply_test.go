@@ -46,6 +46,26 @@ func TestApplyMove_DoesNotMutateInput(t *testing.T) {
 	}
 }
 
+func TestApplyMove_FlipsActiveColor(t *testing.T) {
+	g := NewGame() // White to move
+	m := Move{From: Square{File: 4, Rank: 1}, To: Square{File: 4, Rank: 3}}
+
+	after := ApplyMove(g, m)
+	if after.ActiveColor != Black {
+		t.Errorf("ActiveColor after White move = %d, want Black (%d)", after.ActiveColor, Black)
+	}
+
+	after2 := ApplyMove(after, Move{From: Square{File: 4, Rank: 6}, To: Square{File: 4, Rank: 4}})
+	if after2.ActiveColor != White {
+		t.Errorf("ActiveColor after Black move = %d, want White (%d)", after2.ActiveColor, White)
+	}
+
+	// Caller's state must remain untouched.
+	if g.ActiveColor != White {
+		t.Errorf("input ActiveColor = %d, want White (immutability)", g.ActiveColor)
+	}
+}
+
 func TestApplyMove_AppendsHistory(t *testing.T) {
 	g := NewGame()
 	m := Move{
