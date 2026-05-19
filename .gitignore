@@ -1,0 +1,15 @@
+# IDE
+.idea/
+.vscode/
+
+# Claude Code
+.claude/worktrees/
+.claude/settings.local.json
+
+# Go build / test artifacts
+*.test
+*.out
+coverage.txt
+
+# OS
+.DS_Store
