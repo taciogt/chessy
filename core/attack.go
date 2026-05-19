@@ -1,8 +1,6 @@
 package core
 
 // IsSquareAttacked reports whether any piece of byColor attacks target on b.
-// MVP scope: only enemy Kings produce attacks; later slices extend this per
-// piece type as their movement logic lands.
 func IsSquareAttacked(b Board, target Square, byColor Color) bool {
 	for rank := 0; rank < 8; rank++ {
 		for file := 0; file < 8; file++ {
@@ -30,6 +28,10 @@ func IsSquareAttacked(b Board, target Square, byColor Color) bool {
 				}
 			case Knight:
 				if knightAttacks(from, target) {
+					return true
+				}
+			case Pawn:
+				if pawnAttacks(from, target, byColor) {
 					return true
 				}
 			}
@@ -124,6 +126,26 @@ func kingAttacks(from, target Square) bool {
 		return false
 	}
 	return abs(df) <= 1 && abs(dr) <= 1
+}
+
+// pawnAttacks returns true when the pawn on from (of byColor) attacks target.
+// Pawns attack one square diagonally forward — never straight ahead.
+func pawnAttacks(from, target Square, byColor Color) bool {
+	var forwardDir int
+	if byColor == White {
+		forwardDir = 1
+	} else {
+		forwardDir = -1
+	}
+	attackRank := int(from.Rank) + forwardDir
+	if attackRank < 0 || attackRank > 7 {
+		return false
+	}
+	if int(target.Rank) != attackRank {
+		return false
+	}
+	df := int(from.File) - int(target.File)
+	return df == 1 || df == -1
 }
 
 func abs(x int) int {

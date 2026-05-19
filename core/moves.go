@@ -3,9 +3,6 @@ package core
 // PseudoLegalMoves returns the moves the piece on `from` can geometrically make
 // in the position s, ignoring whether the active King would be left in check.
 // Returns nil when `from` is empty or holds a piece of the inactive color.
-//
-// MVP scope: only the King has movement logic. Other piece types return nil and
-// will be filled in by later slices.
 func PseudoLegalMoves(s GameState, from Square) []Move {
 	p := s.Board[from.Rank][from.File]
 	if p == nil || p.Color != s.ActiveColor {
@@ -22,9 +19,60 @@ func PseudoLegalMoves(s GameState, from Square) []Move {
 		return bishopPseudoLegalMoves(s.Board, from, p.Color)
 	case Knight:
 		return knightPseudoLegalMoves(s.Board, from, p.Color)
+	case Pawn:
+		return pawnPseudoLegalMoves(s.Board, from, p.Color)
 	default:
 		return nil
 	}
+}
+
+// pawnPseudoLegalMoves returns the up-to-4 moves a pawn can make: one square
+// forward (if empty), two squares forward from the starting rank (if both
+// squares are empty), and diagonal captures (one square forward-diagonal if
+// occupied by an enemy piece). En passant and promotion are out of scope for MVP.
+func pawnPseudoLegalMoves(b Board, from Square, mover Color) []Move {
+	moves := make([]Move, 0, 4)
+	var forwardDir int
+	var startRank uint8
+	if mover == White {
+		forwardDir = 1
+		startRank = 1
+	} else {
+		forwardDir = -1
+		startRank = 6
+	}
+
+	nextRank := int(from.Rank) + forwardDir
+	if nextRank < 0 || nextRank > 7 {
+		return moves // pawn at back rank — no promotion in MVP
+	}
+
+	// Forward 1: only if destination is empty.
+	if b[nextRank][from.File] == nil {
+		moves = append(moves, Move{From: from, To: Square{File: from.File, Rank: uint8(nextRank)}})
+
+		// Forward 2: only from starting rank and only when forward 1 was clear.
+		if from.Rank == startRank {
+			doubleRank := int(from.Rank) + 2*forwardDir
+			if b[doubleRank][from.File] == nil {
+				moves = append(moves, Move{From: from, To: Square{File: from.File, Rank: uint8(doubleRank)}})
+			}
+		}
+	}
+
+	// Diagonal captures: only when an enemy piece occupies the target square.
+	for _, df := range [2]int{-1, 1} {
+		tf := int(from.File) + df
+		if tf < 0 || tf > 7 {
+			continue
+		}
+		target := b[nextRank][tf]
+		if target != nil && target.Color != mover {
+			moves = append(moves, Move{From: from, To: Square{File: uint8(tf), Rank: uint8(nextRank)}})
+		}
+	}
+
+	return moves
 }
 
 // knightPseudoLegalMoves enumerates all L-shaped jump targets, dropping off-board
