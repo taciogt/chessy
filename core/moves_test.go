@@ -194,6 +194,80 @@ func TestPseudoLegalMoves_Queen(t *testing.T) {
 	}
 }
 
+func TestPseudoLegalMoves_Rook(t *testing.T) {
+	cases := []struct {
+		name  string
+		setup func() (GameState, Square)
+		want  []string
+	}{
+		{
+			name: "open board centre — 14 targets",
+			setup: func() (GameState, Square) {
+				var b Board
+				b[3][4] = &Piece{Kind: Rook, Color: White} // e4
+				return GameState{Board: b, ActiveColor: White}, sq(4, 3)
+			},
+			want: []string{
+				"e4->a4", "e4->b4", "e4->c4", "e4->d4",
+				"e4->e1", "e4->e2", "e4->e3", "e4->e5", "e4->e6", "e4->e7", "e4->e8",
+				"e4->f4", "e4->g4", "e4->h4",
+			},
+		},
+		{
+			name: "blocked by own piece on west ray",
+			setup: func() (GameState, Square) {
+				var b Board
+				b[3][4] = &Piece{Kind: Rook, Color: White}  // e4
+				b[3][2] = &Piece{Kind: King, Color: White}  // c4 — own piece blocks west
+				return GameState{Board: b, ActiveColor: White}, sq(4, 3)
+			},
+			// d4 reachable; c4 blocked (own piece); a4 and b4 unreachable
+			want: []string{
+				"e4->d4",
+				"e4->e1", "e4->e2", "e4->e3", "e4->e5", "e4->e6", "e4->e7", "e4->e8",
+				"e4->f4", "e4->g4", "e4->h4",
+			},
+		},
+		{
+			name: "captures enemy piece on east ray",
+			setup: func() (GameState, Square) {
+				var b Board
+				b[3][4] = &Piece{Kind: Rook, Color: White}  // e4
+				b[3][6] = &Piece{Kind: King, Color: Black}  // g4 — enemy; capturable, then stops
+				return GameState{Board: b, ActiveColor: White}, sq(4, 3)
+			},
+			// f4 and g4 (capture) reachable; h4 unreachable past enemy piece
+			want: []string{
+				"e4->a4", "e4->b4", "e4->c4", "e4->d4",
+				"e4->e1", "e4->e2", "e4->e3", "e4->e5", "e4->e6", "e4->e7", "e4->e8",
+				"e4->f4", "e4->g4",
+			},
+		},
+		{
+			name: "corner a1 — 14 targets",
+			setup: func() (GameState, Square) {
+				var b Board
+				b[0][0] = &Piece{Kind: Rook, Color: White} // a1
+				return GameState{Board: b, ActiveColor: White}, sq(0, 0)
+			},
+			want: []string{
+				"a1->a2", "a1->a3", "a1->a4", "a1->a5", "a1->a6", "a1->a7", "a1->a8",
+				"a1->b1", "a1->c1", "a1->d1", "a1->e1", "a1->f1", "a1->g1", "a1->h1",
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			state, from := tc.setup()
+			got := moveSet(PseudoLegalMoves(state, from))
+			if !equalStrings(got, tc.want) {
+				t.Errorf("PseudoLegalMoves =\n  %v\nwant\n  %v", got, tc.want)
+			}
+		})
+	}
+}
+
 func equalStrings(a, b []string) bool {
 	if len(a) != len(b) {
 		return false

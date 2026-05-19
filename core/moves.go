@@ -16,6 +16,8 @@ func PseudoLegalMoves(s GameState, from Square) []Move {
 		return kingPseudoLegalMoves(s.Board, from, p.Color)
 	case Queen:
 		return queenPseudoLegalMoves(s.Board, from, p.Color)
+	case Rook:
+		return rookPseudoLegalMoves(s.Board, from, p.Color)
 	default:
 		return nil
 	}
@@ -48,6 +50,33 @@ func queenPseudoLegalMoves(b Board, from Square, mover Color) []Move {
 				if target != nil {
 					break // enemy piece captured — stop sliding
 				}
+			}
+		}
+	}
+	return moves
+}
+
+// rookPseudoLegalMoves slides along the 4 orthogonal rays until blocked by the
+// board edge, a same-colour piece (excluded), or an enemy piece (captured, then stops).
+func rookPseudoLegalMoves(b Board, from Square, mover Color) []Move {
+	moves := make([]Move, 0, 14)
+	for _, d := range [4][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
+		for step := 1; ; step++ {
+			tf := int(from.File) + d[0]*step
+			tr := int(from.Rank) + d[1]*step
+			if tf < 0 || tf > 7 || tr < 0 || tr > 7 {
+				break
+			}
+			target := b[tr][tf]
+			if target != nil && target.Color == mover {
+				break
+			}
+			moves = append(moves, Move{
+				From: from,
+				To:   Square{File: uint8(tf), Rank: uint8(tr)},
+			})
+			if target != nil {
+				break
 			}
 		}
 	}

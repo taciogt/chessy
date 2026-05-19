@@ -70,9 +70,51 @@ func TestIsSquareAttacked_ByQueen(t *testing.T) {
 		{"f5 blocked by e5 not attacked", sq(5, 4), false},
 	}
 
-	// For the blocker case, place a piece on e5 (file=4, rank=4).
+	// Black piece on e5: blocks the Queen's east ray without being a White attacker.
 	blocker := b
-	blocker[4][4] = &Piece{Kind: Rook, Color: White} // e5 blocks the east ray
+	blocker[4][4] = &Piece{Kind: Rook, Color: Black}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			board := b
+			if tc.name == "f5 blocked by e5 not attacked" {
+				board = blocker
+			}
+			if got := IsSquareAttacked(board, tc.target, White); got != tc.want {
+				t.Errorf("IsSquareAttacked(%+v, by White) = %v, want %v", tc.target, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestIsSquareAttacked_ByRook(t *testing.T) {
+	// White Rook on d5 (file=3, rank=4).
+	var b Board
+	b[4][3] = &Piece{Kind: Rook, Color: White}
+
+	cases := []struct {
+		name   string
+		target Square
+		want   bool
+	}{
+		// Same rank.
+		{"h5 same rank attacked", sq(7, 4), true},
+		{"a5 same rank attacked", sq(0, 4), true},
+		// Same file.
+		{"d8 same file attacked", sq(3, 7), true},
+		{"d1 same file attacked", sq(3, 0), true},
+		// Diagonal squares not attacked.
+		{"e6 diagonal not attacked", sq(4, 5), false},
+		{"c4 diagonal not attacked", sq(2, 3), false},
+		// Own square not attacked.
+		{"d5 own square not attacked", sq(3, 4), false},
+		// Blocker on ray: piece between rook and target blocks the attack.
+		{"f5 blocked by e5 not attacked", sq(5, 4), false},
+	}
+
+	// Black piece on e5: blocks the Rook's east ray without being a White attacker.
+	blocker := b
+	blocker[4][4] = &Piece{Kind: King, Color: Black}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

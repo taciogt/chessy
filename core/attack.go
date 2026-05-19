@@ -20,6 +20,10 @@ func IsSquareAttacked(b Board, target Square, byColor Color) bool {
 				if queenAttacks(b, from, target) {
 					return true
 				}
+			case Rook:
+				if rookAttacks(b, from, target) {
+					return true
+				}
 			}
 		}
 	}
@@ -47,6 +51,28 @@ func queenAttacks(b Board, from, target Square) bool {
 				if b[tr][tf] != nil {
 					break // any piece blocks the ray before target
 				}
+			}
+		}
+	}
+	return false
+}
+
+// rookAttacks slides along the 4 orthogonal rays; returns true if target is
+// reached before any intervening piece blocks the ray.
+func rookAttacks(b Board, from, target Square) bool {
+	for _, d := range [4][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
+		for step := 1; ; step++ {
+			tf := int(from.File) + d[0]*step
+			tr := int(from.Rank) + d[1]*step
+			if tf < 0 || tf > 7 || tr < 0 || tr > 7 {
+				break
+			}
+			sq := Square{File: uint8(tf), Rank: uint8(tr)}
+			if sq == target {
+				return true
+			}
+			if b[tr][tf] != nil {
+				break
 			}
 		}
 	}
