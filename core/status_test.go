@@ -143,6 +143,64 @@ func TestComputeStatus_KQK_ActiveQueenSide_Ongoing(t *testing.T) {
 	}
 }
 
+func TestComputeStatus_Checkmate_KRK(t *testing.T) {
+	// BK a8 in check by WR a1 (a-file). WK c7 covers b8 and b7.
+	// BK escapes: a7 attacked by WR, b7 attacked by WK, b8 attacked by WK.
+	//
+	//   8 k . . . . . . .   (BK a8 — in check, no escape)
+	//   7 . . K . . . . .   (WK c7 — covers b8, b7)
+	//   1 R . . . . . . .   (WR a1 — gives check)
+	//     a b c d e f g h
+	var b Board
+	b[7][0] = &Piece{Kind: King, Color: Black}  // a8
+	b[0][0] = &Piece{Kind: Rook, Color: White}  // a1
+	b[6][2] = &Piece{Kind: King, Color: White}  // c7
+	state := GameState{Board: b, ActiveColor: Black}
+
+	if got := ComputeStatus(state); got != Checkmate {
+		t.Errorf("ComputeStatus = %d, want Checkmate (%d)", got, Checkmate)
+	}
+}
+
+func TestComputeStatus_Check_KRK(t *testing.T) {
+	// BK a8 in check by WR a1 (a-file). WK c6 covers b7 but NOT b8.
+	// BK can escape to b8 → Check, not Checkmate.
+	//
+	//   8 k . . . . . . .   (BK a8 — in check, can escape to b8)
+	//   6 . . K . . . . .   (WK c6 — covers b7, not b8)
+	//   1 R . . . . . . .   (WR a1 — gives check)
+	//     a b c d e f g h
+	var b Board
+	b[7][0] = &Piece{Kind: King, Color: Black}  // a8
+	b[0][0] = &Piece{Kind: Rook, Color: White}  // a1
+	b[5][2] = &Piece{Kind: King, Color: White}  // c6
+	state := GameState{Board: b, ActiveColor: Black}
+
+	if got := ComputeStatus(state); got != Check {
+		t.Errorf("ComputeStatus = %d, want Check (%d)", got, Check)
+	}
+}
+
+func TestComputeStatus_KRK_ActiveRookSide_Ongoing(t *testing.T) {
+	// White (K+R) to move, kings far apart — White has many legal moves → Ongoing.
+	// Exercises the guard path for the active side having a Rook; after adding
+	// Rook to the implemented set, status is computed via proper legal-move
+	// enumeration rather than the phased-implementation downgrade.
+	//
+	//   8 . . . . . . . k   (BK h8 — far away)
+	//   1 K R . . . . . .   (WK a1, WR b1)
+	//     a b c d e f g h
+	var b Board
+	b[0][0] = &Piece{Kind: King, Color: White} // a1
+	b[0][1] = &Piece{Kind: Rook, Color: White} // b1
+	b[7][7] = &Piece{Kind: King, Color: Black} // h8
+	state := GameState{Board: b, ActiveColor: White}
+
+	if got := ComputeStatus(state); got != Ongoing {
+		t.Errorf("ComputeStatus = %d, want Ongoing (%d)", got, Ongoing)
+	}
+}
+
 func TestGameStatus_DistinctValues(t *testing.T) {
 	values := map[string]GameStatus{
 		"Ongoing":   Ongoing,
