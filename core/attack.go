@@ -10,8 +10,43 @@ func IsSquareAttacked(b Board, target Square, byColor Color) bool {
 			if p == nil || p.Color != byColor {
 				continue
 			}
-			if p.Kind == King && kingAttacks(Square{File: uint8(file), Rank: uint8(rank)}, target) {
-				return true
+			from := Square{File: uint8(file), Rank: uint8(rank)}
+			switch p.Kind {
+			case King:
+				if kingAttacks(from, target) {
+					return true
+				}
+			case Queen:
+				if queenAttacks(b, from, target) {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+// queenAttacks slides along each of the 8 rays from from; returns true if
+// target is reached before any intervening piece blocks the ray.
+func queenAttacks(b Board, from, target Square) bool {
+	for df := -1; df <= 1; df++ {
+		for dr := -1; dr <= 1; dr++ {
+			if df == 0 && dr == 0 {
+				continue
+			}
+			for step := 1; ; step++ {
+				tf := int(from.File) + df*step
+				tr := int(from.Rank) + dr*step
+				if tf < 0 || tf > 7 || tr < 0 || tr > 7 {
+					break
+				}
+				sq := Square{File: uint8(tf), Rank: uint8(tr)}
+				if sq == target {
+					return true
+				}
+				if b[tr][tf] != nil {
+					break // any piece blocks the ray before target
+				}
 			}
 		}
 	}

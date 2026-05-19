@@ -14,9 +14,44 @@ func PseudoLegalMoves(s GameState, from Square) []Move {
 	switch p.Kind {
 	case King:
 		return kingPseudoLegalMoves(s.Board, from, p.Color)
+	case Queen:
+		return queenPseudoLegalMoves(s.Board, from, p.Color)
 	default:
 		return nil
 	}
+}
+
+// queenPseudoLegalMoves slides along all 8 directions until blocked by the
+// board edge, a same-colour piece (excluded), or an enemy piece (included as a
+// capture, then stops).
+func queenPseudoLegalMoves(b Board, from Square, mover Color) []Move {
+	moves := make([]Move, 0, 27)
+	for df := -1; df <= 1; df++ {
+		for dr := -1; dr <= 1; dr++ {
+			if df == 0 && dr == 0 {
+				continue
+			}
+			for step := 1; ; step++ {
+				tf := int(from.File) + df*step
+				tr := int(from.Rank) + dr*step
+				if tf < 0 || tf > 7 || tr < 0 || tr > 7 {
+					break
+				}
+				target := b[tr][tf]
+				if target != nil && target.Color == mover {
+					break
+				}
+				moves = append(moves, Move{
+					From: from,
+					To:   Square{File: uint8(tf), Rank: uint8(tr)},
+				})
+				if target != nil {
+					break // enemy piece captured — stop sliding
+				}
+			}
+		}
+	}
+	return moves
 }
 
 // kingPseudoLegalMoves enumerates the up-to-8 single-step targets, dropping
