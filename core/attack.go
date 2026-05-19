@@ -24,10 +24,47 @@ func IsSquareAttacked(b Board, target Square, byColor Color) bool {
 				if rookAttacks(b, from, target) {
 					return true
 				}
+			case Bishop:
+				if bishopAttacks(b, from, target) {
+					return true
+				}
+			case Knight:
+				if knightAttacks(from, target) {
+					return true
+				}
 			}
 		}
 	}
 	return false
+}
+
+// bishopAttacks slides along the 4 diagonal rays; returns true if target is
+// reached before any intervening piece blocks the ray.
+func bishopAttacks(b Board, from, target Square) bool {
+	for _, d := range [4][2]int{{1, 1}, {1, -1}, {-1, 1}, {-1, -1}} {
+		for step := 1; ; step++ {
+			tf := int(from.File) + d[0]*step
+			tr := int(from.Rank) + d[1]*step
+			if tf < 0 || tf > 7 || tr < 0 || tr > 7 {
+				break
+			}
+			sq := Square{File: uint8(tf), Rank: uint8(tr)}
+			if sq == target {
+				return true
+			}
+			if b[tr][tf] != nil {
+				break
+			}
+		}
+	}
+	return false
+}
+
+// knightAttacks returns true when target is reachable from from by an L-shaped jump.
+func knightAttacks(from, target Square) bool {
+	df := abs(int(from.File) - int(target.File))
+	dr := abs(int(from.Rank) - int(target.Rank))
+	return (df == 1 && dr == 2) || (df == 2 && dr == 1)
 }
 
 // queenAttacks slides along each of the 8 rays from from; returns true if

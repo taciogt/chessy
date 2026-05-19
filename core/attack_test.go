@@ -146,3 +146,92 @@ func TestIsSquareAttacked_NoAttackerOnEmptyBoard(t *testing.T) {
 		t.Errorf("empty board: IsSquareAttacked = true, want false")
 	}
 }
+
+func TestIsSquareAttacked_ByBishop(t *testing.T) {
+	// White Bishop on d5 (file=3, rank=4).
+	var b Board
+	b[4][3] = &Piece{Kind: Bishop, Color: White}
+
+	cases := []struct {
+		name   string
+		target Square
+		board  Board
+		want   bool
+	}{
+		{"g8 NE diagonal attacked", sq(6, 7), b, true},
+		{"a2 SW diagonal attacked", sq(0, 1), b, true},
+		{"f3 SE diagonal attacked", sq(5, 2), b, true},
+		{"b7 NW diagonal attacked", sq(1, 6), b, true},
+		{"same rank not attacked", sq(7, 4), b, false},
+		{"same file not attacked", sq(3, 7), b, false},
+		{"off-axis not attacked", sq(4, 6), b, false},
+		{"own square not attacked", sq(3, 4), b, false},
+	}
+
+	// Add blocker test: Black piece on e6 blocks NE ray past it.
+	withBlocker := b
+	withBlocker[5][4] = &Piece{Kind: Rook, Color: Black} // e6 blocks NE ray
+	cases = append(cases,
+		struct {
+			name   string
+			target Square
+			board  Board
+			want   bool
+		}{"f7 blocked by e6 not attacked", sq(5, 6), withBlocker, false},
+	)
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := IsSquareAttacked(tc.board, tc.target, White); got != tc.want {
+				t.Errorf("IsSquareAttacked(%+v, by White) = %v, want %v", tc.target, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestIsSquareAttacked_ByKnight(t *testing.T) {
+	// White Knight on d5 (file=3, rank=4).
+	var b Board
+	b[4][3] = &Piece{Kind: Knight, Color: White}
+
+	cases := []struct {
+		name   string
+		target Square
+		want   bool
+	}{
+		// All 8 L-shaped targets from d5.
+		{"c3 attacked", sq(2, 2), true},
+		{"e3 attacked", sq(4, 2), true},
+		{"b4 attacked", sq(1, 3), true},
+		{"f4 attacked", sq(5, 3), true},
+		{"b6 attacked", sq(1, 5), true},
+		{"f6 attacked", sq(5, 5), true},
+		{"c7 attacked", sq(2, 6), true},
+		{"e7 attacked", sq(4, 6), true},
+		// Non-L-shaped squares not attacked.
+		{"d4 adjacent not attacked", sq(3, 3), false},
+		{"e6 diagonal not attacked", sq(4, 5), false},
+		{"a5 same rank not attacked", sq(0, 4), false},
+	}
+
+	// Verify knight ignores blockers: pack all adjacent squares, targets still attacked.
+	withBlockers := b
+	withBlockers[3][3] = &Piece{Kind: Pawn, Color: Black} // d4
+	withBlockers[5][3] = &Piece{Kind: Pawn, Color: Black} // d6
+	withBlockers[4][2] = &Piece{Kind: Pawn, Color: Black} // c5
+	withBlockers[4][4] = &Piece{Kind: Pawn, Color: Black} // e5
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := IsSquareAttacked(b, tc.target, White); got != tc.want {
+				t.Errorf("IsSquareAttacked(%+v, by White) = %v, want %v", tc.target, got, tc.want)
+			}
+		})
+	}
+
+	t.Run("ignores blockers on adjacent squares", func(t *testing.T) {
+		if got := IsSquareAttacked(withBlockers, sq(2, 2), White); !got {
+			t.Errorf("Knight should still attack c3 even with all adjacent squares occupied")
+		}
+	})
+}

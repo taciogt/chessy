@@ -22,6 +22,29 @@ func TestLegalMoves_KingsCanNeverBeAdjacent(t *testing.T) {
 	}
 }
 
+func TestLegalMoves_BishopPinnedAlongDiagonal(t *testing.T) {
+	// White King on e1, White Bishop on c3, Black Bishop on a5.
+	// The pin ray runs NW-SE through a5-c3-e1. The White Bishop may only move
+	// along that ray (b4, a5-capture, d2); its off-ray pseudo-legal moves
+	// (d4, e5 etc. and b2, a1) would expose the King and must be excluded.
+	var b Board
+	b[0][4] = &Piece{Kind: King, Color: White}   // e1
+	b[2][2] = &Piece{Kind: Bishop, Color: White} // c3 — pinned piece
+	b[4][0] = &Piece{Kind: Bishop, Color: Black} // a5 — pinner
+	state := GameState{Board: b, ActiveColor: White}
+
+	got := moveSet(LegalMoves(state))
+	want := []string{
+		// Bishop moves along pin ray only (off-ray moves excluded).
+		"c3->a5", "c3->b4", "c3->d2",
+		// King moves (d2 is safe: white bishop on c3 blocks a5's ray).
+		"e1->d1", "e1->d2", "e1->e2", "e1->f1", "e1->f2",
+	}
+	if !equalStrings(got, want) {
+		t.Errorf("LegalMoves =\n  %v\nwant\n  %v", got, want)
+	}
+}
+
 func TestLegalMoves_OnlyActiveColorPieces(t *testing.T) {
 	// White King on e4, Black King on a8. White to move.
 	// The Black King's pseudo-legal moves must NOT appear in LegalMoves.

@@ -48,7 +48,7 @@ func ComputeStatus(s GameState) GameStatus {
 // activeSideHasOnlyImplementedPieces is a phased-implementation guard.
 // A position is only safe to terminate when every active-side piece kind has
 // full movement logic. Each slice that adds a piece type extends this set.
-// Implemented: King, Queen, Rook.
+// Implemented: King, Queen, Rook, Bishop, Knight.
 func activeSideHasOnlyImplementedPieces(s GameState) bool {
 	for rank := 0; rank < 8; rank++ {
 		for file := 0; file < 8; file++ {
@@ -57,7 +57,7 @@ func activeSideHasOnlyImplementedPieces(s GameState) bool {
 				continue
 			}
 			switch p.Kind {
-			case King, Queen, Rook:
+			case King, Queen, Rook, Bishop, Knight:
 				// implemented
 			default:
 				return false

@@ -268,6 +268,187 @@ func TestPseudoLegalMoves_Rook(t *testing.T) {
 	}
 }
 
+func TestPseudoLegalMoves_Bishop(t *testing.T) {
+	cases := []struct {
+		name  string
+		setup func() (GameState, Square)
+		want  []string
+	}{
+		{
+			name: "open board centre — 13 targets",
+			setup: func() (GameState, Square) {
+				var b Board
+				b[3][4] = &Piece{Kind: Bishop, Color: White} // e4
+				return GameState{Board: b, ActiveColor: White}, sq(4, 3)
+			},
+			want: []string{
+				"e4->a8",
+				"e4->b1", "e4->b7",
+				"e4->c2", "e4->c6",
+				"e4->d3", "e4->d5",
+				"e4->f3", "e4->f5",
+				"e4->g2", "e4->g6",
+				"e4->h1", "e4->h7",
+			},
+		},
+		{
+			name: "blocked by own piece on NE diagonal",
+			setup: func() (GameState, Square) {
+				var b Board
+				b[3][4] = &Piece{Kind: Bishop, Color: White} // e4
+				b[5][6] = &Piece{Kind: Rook, Color: White}   // g6 — own piece blocks NE
+				return GameState{Board: b, ActiveColor: White}, sq(4, 3)
+			},
+			// f5 reachable, g6 blocked (own), h7 unreachable
+			want: []string{
+				"e4->a8",
+				"e4->b1", "e4->b7",
+				"e4->c2", "e4->c6",
+				"e4->d3", "e4->d5",
+				"e4->f3", "e4->f5",
+				"e4->g2",
+				"e4->h1",
+			},
+		},
+		{
+			name: "captures enemy piece on SW diagonal",
+			setup: func() (GameState, Square) {
+				var b Board
+				b[3][4] = &Piece{Kind: Bishop, Color: White} // e4
+				b[1][2] = &Piece{Kind: Rook, Color: Black}   // c2 — enemy; capturable, then stops
+				return GameState{Board: b, ActiveColor: White}, sq(4, 3)
+			},
+			// d3 and c2 (capture) reachable, b1 unreachable past enemy
+			want: []string{
+				"e4->a8",
+				"e4->b7",
+				"e4->c2", "e4->c6",
+				"e4->d3", "e4->d5",
+				"e4->f3", "e4->f5",
+				"e4->g2", "e4->g6",
+				"e4->h1", "e4->h7",
+			},
+		},
+		{
+			name: "corner a1 — 7 targets",
+			setup: func() (GameState, Square) {
+				var b Board
+				b[0][0] = &Piece{Kind: Bishop, Color: White} // a1
+				return GameState{Board: b, ActiveColor: White}, sq(0, 0)
+			},
+			want: []string{
+				"a1->b2", "a1->c3", "a1->d4", "a1->e5", "a1->f6", "a1->g7", "a1->h8",
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			state, from := tc.setup()
+			got := moveSet(PseudoLegalMoves(state, from))
+			if !equalStrings(got, tc.want) {
+				t.Errorf("PseudoLegalMoves =\n  %v\nwant\n  %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestPseudoLegalMoves_Knight(t *testing.T) {
+	cases := []struct {
+		name  string
+		setup func() (GameState, Square)
+		want  []string
+	}{
+		{
+			name: "open board centre — 8 targets",
+			setup: func() (GameState, Square) {
+				var b Board
+				b[3][4] = &Piece{Kind: Knight, Color: White} // e4
+				return GameState{Board: b, ActiveColor: White}, sq(4, 3)
+			},
+			want: []string{
+				"e4->c3", "e4->c5",
+				"e4->d2", "e4->d6",
+				"e4->f2", "e4->f6",
+				"e4->g3", "e4->g5",
+			},
+		},
+		{
+			name: "corner a1 — 2 targets",
+			setup: func() (GameState, Square) {
+				var b Board
+				b[0][0] = &Piece{Kind: Knight, Color: White} // a1
+				return GameState{Board: b, ActiveColor: White}, sq(0, 0)
+			},
+			want: []string{"a1->b3", "a1->c2"},
+		},
+		{
+			name: "leaps over blocking pieces",
+			setup: func() (GameState, Square) {
+				var b Board
+				b[3][4] = &Piece{Kind: Knight, Color: White} // e4
+				// Pack all adjacent squares with pieces — knight must leap over them
+				b[2][4] = &Piece{Kind: Pawn, Color: White} // e3
+				b[4][4] = &Piece{Kind: Pawn, Color: White} // e5
+				b[3][3] = &Piece{Kind: Pawn, Color: White} // d4
+				b[3][5] = &Piece{Kind: Pawn, Color: White} // f4
+				b[2][3] = &Piece{Kind: Pawn, Color: Black} // d3
+				b[4][3] = &Piece{Kind: Pawn, Color: Black} // d5
+				b[2][5] = &Piece{Kind: Pawn, Color: Black} // f3
+				b[4][5] = &Piece{Kind: Pawn, Color: Black} // f5
+				return GameState{Board: b, ActiveColor: White}, sq(4, 3)
+			},
+			// Knight ignores all blockers — still reaches all 8 L-shaped targets
+			want: []string{
+				"e4->c3", "e4->c5",
+				"e4->d2", "e4->d6",
+				"e4->f2", "e4->f6",
+				"e4->g3", "e4->g5",
+			},
+		},
+		{
+			name: "captures enemy piece",
+			setup: func() (GameState, Square) {
+				var b Board
+				b[3][4] = &Piece{Kind: Knight, Color: White} // e4
+				b[5][5] = &Piece{Kind: Rook, Color: Black}   // f6 — enemy; capturable
+				return GameState{Board: b, ActiveColor: White}, sq(4, 3)
+			},
+			want: []string{
+				"e4->c3", "e4->c5",
+				"e4->d2", "e4->d6",
+				"e4->f2", "e4->f6",
+				"e4->g3", "e4->g5",
+			},
+		},
+		{
+			name: "blocked by own piece",
+			setup: func() (GameState, Square) {
+				var b Board
+				b[3][4] = &Piece{Kind: Knight, Color: White} // e4
+				b[5][5] = &Piece{Kind: Rook, Color: White}   // f6 — own piece; excluded
+				return GameState{Board: b, ActiveColor: White}, sq(4, 3)
+			},
+			want: []string{
+				"e4->c3", "e4->c5",
+				"e4->d2", "e4->d6",
+				"e4->f2",
+				"e4->g3", "e4->g5",
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			state, from := tc.setup()
+			got := moveSet(PseudoLegalMoves(state, from))
+			if !equalStrings(got, tc.want) {
+				t.Errorf("PseudoLegalMoves =\n  %v\nwant\n  %v", got, tc.want)
+			}
+		})
+	}
+}
+
 func equalStrings(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
