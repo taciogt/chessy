@@ -235,3 +235,104 @@ func TestIsSquareAttacked_ByKnight(t *testing.T) {
 		}
 	})
 }
+
+func TestIsSquareAttacked_ByPawn(t *testing.T) {
+	cases := []struct {
+		name    string
+		setup   func() Board
+		target  Square
+		byColor Color
+		want    bool
+	}{
+		{
+			name: "white pawn e4 attacks d5",
+			setup: func() Board {
+				var b Board
+				b[3][4] = &Piece{Kind: Pawn, Color: White} // e4
+				return b
+			},
+			target: sq(3, 4), byColor: White, want: true,
+		},
+		{
+			name: "white pawn e4 attacks f5",
+			setup: func() Board {
+				var b Board
+				b[3][4] = &Piece{Kind: Pawn, Color: White} // e4
+				return b
+			},
+			target: sq(5, 4), byColor: White, want: true,
+		},
+		{
+			name: "white pawn e4 does NOT attack e5 (forward, not diagonal)",
+			setup: func() Board {
+				var b Board
+				b[3][4] = &Piece{Kind: Pawn, Color: White} // e4
+				return b
+			},
+			target: sq(4, 4), byColor: White, want: false,
+		},
+		{
+			name: "black pawn e5 attacks d4",
+			setup: func() Board {
+				var b Board
+				b[4][4] = &Piece{Kind: Pawn, Color: Black} // e5
+				return b
+			},
+			target: sq(3, 3), byColor: Black, want: true,
+		},
+		{
+			name: "black pawn e5 attacks f4",
+			setup: func() Board {
+				var b Board
+				b[4][4] = &Piece{Kind: Pawn, Color: Black} // e5
+				return b
+			},
+			target: sq(5, 3), byColor: Black, want: true,
+		},
+		{
+			name: "black pawn e5 does NOT attack e4 (forward for Black, not diagonal)",
+			setup: func() Board {
+				var b Board
+				b[4][4] = &Piece{Kind: Pawn, Color: Black} // e5
+				return b
+			},
+			target: sq(4, 3), byColor: Black, want: false,
+		},
+		{
+			name: "white pawn a4 edge file — only attacks b5, not off-board",
+			setup: func() Board {
+				var b Board
+				b[3][0] = &Piece{Kind: Pawn, Color: White} // a4
+				return b
+			},
+			target: sq(1, 4), byColor: White, want: true,
+		},
+		{
+			name: "white pawn a4 does NOT attack off-board left",
+			setup: func() Board {
+				var b Board
+				b[3][0] = &Piece{Kind: Pawn, Color: White} // a4
+				return b
+			},
+			target: sq(0, 4), byColor: White, want: false, // a5 itself, not diagonal
+		},
+		{
+			name: "white pawn h4 edge file — only attacks g5",
+			setup: func() Board {
+				var b Board
+				b[3][7] = &Piece{Kind: Pawn, Color: White} // h4
+				return b
+			},
+			target: sq(6, 4), byColor: White, want: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			b := tc.setup()
+			if got := IsSquareAttacked(b, tc.target, tc.byColor); got != tc.want {
+				t.Errorf("IsSquareAttacked(%+v, by %v) = %v, want %v", tc.target, tc.byColor, got, tc.want)
+			}
+		})
+	}
+}

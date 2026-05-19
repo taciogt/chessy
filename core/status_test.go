@@ -201,6 +201,69 @@ func TestComputeStatus_KRK_ActiveRookSide_Ongoing(t *testing.T) {
 	}
 }
 
+func TestComputeStatus_Checkmate_ScholarsMate(t *testing.T) {
+	// Scholar's Mate final position after 1.e4 e5 2.Bc4 Nc6 3.Qh5 Nf6 4.Qxf7#
+	// Black to move, in check from WQ on f7 (attacks e8 diagonally).
+	//
+	//   8 r . b q k b n r   (BK e8 — in check, no escape)
+	//   7 p p p p . Q p p   (WQ f7 — gives check; Black f7 pawn was captured)
+	//   6 . . n . . n . .   (Black knights c6, f6)
+	//   5 . . . . p . . .   (Black e-pawn)
+	//   4 . . B . P . . .   (WB c4, WP e4)
+	//   3 . . . . . . . .
+	//   2 P P P P . P P P   (White pawns)
+	//   1 R N B . K . N R   (White back rank)
+	//     a b c d e f g h
+	//
+	// Escape analysis:
+	//   d7 — own Black pawn blocks
+	//   d8 — own Black Queen blocks
+	//   e7 — attacked by WQ f7 (same rank)
+	//   f7 — WQ there; if captured, WB c4 attacks via NE diagonal (d5, e6, f7)
+	//   f8 — own Black Bishop blocks
+	var b Board
+	// White pieces
+	b[0][0] = &Piece{Kind: Rook, Color: White}   // a1
+	b[0][1] = &Piece{Kind: Knight, Color: White} // b1
+	b[0][2] = &Piece{Kind: Bishop, Color: White} // c1
+	b[0][4] = &Piece{Kind: King, Color: White}   // e1
+	b[0][6] = &Piece{Kind: Knight, Color: White} // g1
+	b[0][7] = &Piece{Kind: Rook, Color: White}   // h1
+	b[3][2] = &Piece{Kind: Bishop, Color: White} // c4 (moved from f1)
+	b[3][4] = &Piece{Kind: Pawn, Color: White}   // e4
+	b[6][5] = &Piece{Kind: Queen, Color: White}  // f7 (gives check)
+	b[1][0] = &Piece{Kind: Pawn, Color: White}   // a2
+	b[1][1] = &Piece{Kind: Pawn, Color: White}   // b2
+	b[1][2] = &Piece{Kind: Pawn, Color: White}   // c2
+	b[1][3] = &Piece{Kind: Pawn, Color: White}   // d2
+	b[1][5] = &Piece{Kind: Pawn, Color: White}   // f2
+	b[1][6] = &Piece{Kind: Pawn, Color: White}   // g2
+	b[1][7] = &Piece{Kind: Pawn, Color: White}   // h2
+	// Black pieces
+	b[7][0] = &Piece{Kind: Rook, Color: Black}   // a8
+	b[7][2] = &Piece{Kind: Bishop, Color: Black} // c8
+	b[7][3] = &Piece{Kind: Queen, Color: Black}  // d8 — blocks d8 escape
+	b[7][4] = &Piece{Kind: King, Color: Black}   // e8
+	b[7][5] = &Piece{Kind: Bishop, Color: Black} // f8 — blocks f8 escape
+	b[7][6] = &Piece{Kind: Knight, Color: Black} // g8
+	b[7][7] = &Piece{Kind: Rook, Color: Black}   // h8
+	b[5][2] = &Piece{Kind: Knight, Color: Black} // c6
+	b[5][5] = &Piece{Kind: Knight, Color: Black} // f6
+	b[4][4] = &Piece{Kind: Pawn, Color: Black}   // e5
+	b[6][0] = &Piece{Kind: Pawn, Color: Black}   // a7
+	b[6][1] = &Piece{Kind: Pawn, Color: Black}   // b7
+	b[6][2] = &Piece{Kind: Pawn, Color: Black}   // c7
+	b[6][3] = &Piece{Kind: Pawn, Color: Black}   // d7 — blocks d7 escape
+	b[6][6] = &Piece{Kind: Pawn, Color: Black}   // g7
+	b[6][7] = &Piece{Kind: Pawn, Color: Black}   // h7
+
+	state := GameState{Board: b, ActiveColor: Black}
+
+	if got := ComputeStatus(state); got != Checkmate {
+		t.Errorf("ComputeStatus(Scholar's Mate) = %d, want Checkmate (%d)", got, Checkmate)
+	}
+}
+
 func TestGameStatus_DistinctValues(t *testing.T) {
 	values := map[string]GameStatus{
 		"Ongoing":   Ongoing,

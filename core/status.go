@@ -11,13 +11,6 @@ const (
 )
 
 // ComputeStatus returns the current outcome of s for the side to move.
-//
-// Terminal statuses (Checkmate, Stalemate) require an exhaustive legal-move
-// search. While the engine is built up piece-by-piece, this slice only
-// generates moves for Kings; so "no legal moves" is only trusted when the
-// active side has nothing but Kings on the board. In any other case we
-// downgrade to Check (if the King is attacked) or Ongoing — never falsely
-// terminating a game just because, say, Pawn moves aren't wired in yet.
 func ComputeStatus(s GameState) GameStatus {
 	kingSq, hasKing := findKing(s.Board, s.ActiveColor)
 	var attacked bool
@@ -45,10 +38,8 @@ func ComputeStatus(s GameState) GameStatus {
 	}
 }
 
-// activeSideHasOnlyImplementedPieces is a phased-implementation guard.
-// A position is only safe to terminate when every active-side piece kind has
-// full movement logic. Each slice that adds a piece type extends this set.
-// Implemented: King, Queen, Rook, Bishop, Knight.
+// activeSideHasOnlyImplementedPieces is a phased-implementation guard that
+// prevents false terminal-state detection. All piece types are now implemented.
 func activeSideHasOnlyImplementedPieces(s GameState) bool {
 	for rank := 0; rank < 8; rank++ {
 		for file := 0; file < 8; file++ {
@@ -57,8 +48,8 @@ func activeSideHasOnlyImplementedPieces(s GameState) bool {
 				continue
 			}
 			switch p.Kind {
-			case King, Queen, Rook, Bishop, Knight:
-				// implemented
+			case King, Queen, Rook, Bishop, Knight, Pawn:
+				// all piece types implemented
 			default:
 				return false
 			}
