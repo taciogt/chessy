@@ -1,4 +1,4 @@
-.PHONY: help test test-v cover build run fmt vet tidy clean
+.PHONY: help test test-v cover build run fmt vet tidy clean lint
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -29,3 +29,6 @@ tidy: ## Tidy go modules
 
 clean: ## Remove build artifacts
 	go clean ./...
+
+lint: ## Run golangci-lint
+	golangci-lint run ./...
