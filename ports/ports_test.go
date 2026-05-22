@@ -10,8 +10,8 @@ import (
 // noop implements both ports.Player and ports.Renderer with do-nothing bodies.
 type noop struct{}
 
-func (noop) SelectMove(core.GameState) core.Move { return core.Move{} }
-func (noop) Render(core.GameState)                {}
+func (noop) SelectMove(core.GameState) core.Move        { return core.Move{} }
+func (noop) Render(core.GameState, core.RenderHints)    {}
 
 // Compile-time assertions: interface contracts are satisfiable.
 var (
@@ -24,5 +24,5 @@ func TestPlayerAndRendererAreSatisfiable(t *testing.T) {
 	var r ports.Renderer = noop{}
 
 	_ = p.SelectMove(core.NewGame())
-	r.Render(core.NewGame())
+	r.Render(core.NewGame(), core.RenderHints{})
 }
