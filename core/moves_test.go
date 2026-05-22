@@ -24,7 +24,7 @@ func TestPseudoLegalMoves_King(t *testing.T) {
 	cases := []struct {
 		name  string
 		setup func() (GameState, Square) // returns state and the King's square
-		want  []string                    // expected "from->to" set
+		want  []string                   // expected "from->to" set
 	}{
 		{
 			name: "open board centre — 8 targets",
@@ -217,8 +217,8 @@ func TestPseudoLegalMoves_Rook(t *testing.T) {
 			name: "blocked by own piece on west ray",
 			setup: func() (GameState, Square) {
 				var b Board
-				b[3][4] = &Piece{Kind: Rook, Color: White}  // e4
-				b[3][2] = &Piece{Kind: King, Color: White}  // c4 — own piece blocks west
+				b[3][4] = &Piece{Kind: Rook, Color: White} // e4
+				b[3][2] = &Piece{Kind: King, Color: White} // c4 — own piece blocks west
 				return GameState{Board: b, ActiveColor: White}, sq(4, 3)
 			},
 			// d4 reachable; c4 blocked (own piece); a4 and b4 unreachable
@@ -232,8 +232,8 @@ func TestPseudoLegalMoves_Rook(t *testing.T) {
 			name: "captures enemy piece on east ray",
 			setup: func() (GameState, Square) {
 				var b Board
-				b[3][4] = &Piece{Kind: Rook, Color: White}  // e4
-				b[3][6] = &Piece{Kind: King, Color: Black}  // g4 — enemy; capturable, then stops
+				b[3][4] = &Piece{Kind: Rook, Color: White} // e4
+				b[3][6] = &Piece{Kind: King, Color: Black} // g4 — enemy; capturable, then stops
 				return GameState{Board: b, ActiveColor: White}, sq(4, 3)
 			},
 			// f4 and g4 (capture) reachable; h4 unreachable past enemy piece
@@ -477,8 +477,8 @@ func TestPseudoLegalMoves_Pawn(t *testing.T) {
 			name: "white pawn e2 blocked by own piece on e3 — no moves",
 			setup: func() (GameState, Square) {
 				var b Board
-				b[1][4] = &Piece{Kind: Pawn, Color: White}  // e2
-				b[2][4] = &Piece{Kind: Rook, Color: White}  // e3 blocker
+				b[1][4] = &Piece{Kind: Pawn, Color: White} // e2
+				b[2][4] = &Piece{Kind: Rook, Color: White} // e3 blocker
 				return GameState{Board: b, ActiveColor: White}, sq(4, 1)
 			},
 			want: []string{},
@@ -487,8 +487,8 @@ func TestPseudoLegalMoves_Pawn(t *testing.T) {
 			name: "white pawn e2 blocked by enemy piece on e3 — no moves",
 			setup: func() (GameState, Square) {
 				var b Board
-				b[1][4] = &Piece{Kind: Pawn, Color: White}  // e2
-				b[2][4] = &Piece{Kind: Rook, Color: Black}  // e3 blocker
+				b[1][4] = &Piece{Kind: Pawn, Color: White} // e2
+				b[2][4] = &Piece{Kind: Rook, Color: Black} // e3 blocker
 				return GameState{Board: b, ActiveColor: White}, sq(4, 1)
 			},
 			want: []string{},
@@ -497,8 +497,8 @@ func TestPseudoLegalMoves_Pawn(t *testing.T) {
 			name: "white pawn e2 blocked on e4 — single push only",
 			setup: func() (GameState, Square) {
 				var b Board
-				b[1][4] = &Piece{Kind: Pawn, Color: White}  // e2
-				b[3][4] = &Piece{Kind: Rook, Color: White}  // e4 blocker
+				b[1][4] = &Piece{Kind: Pawn, Color: White} // e2
+				b[3][4] = &Piece{Kind: Rook, Color: White} // e4 blocker
 				return GameState{Board: b, ActiveColor: White}, sq(4, 1)
 			},
 			want: []string{"e2->e3"},
@@ -507,9 +507,9 @@ func TestPseudoLegalMoves_Pawn(t *testing.T) {
 			name: "white pawn e4 — diagonal captures both sides",
 			setup: func() (GameState, Square) {
 				var b Board
-				b[3][4] = &Piece{Kind: Pawn, Color: White}  // e4
-				b[4][3] = &Piece{Kind: Pawn, Color: Black}  // d5 enemy
-				b[4][5] = &Piece{Kind: Pawn, Color: Black}  // f5 enemy
+				b[3][4] = &Piece{Kind: Pawn, Color: White} // e4
+				b[4][3] = &Piece{Kind: Pawn, Color: Black} // d5 enemy
+				b[4][5] = &Piece{Kind: Pawn, Color: Black} // f5 enemy
 				return GameState{Board: b, ActiveColor: White}, sq(4, 3)
 			},
 			want: []string{"e4->d5", "e4->e5", "e4->f5"},
@@ -546,9 +546,9 @@ func TestPseudoLegalMoves_Pawn(t *testing.T) {
 			name: "black pawn e5 — diagonal captures both sides",
 			setup: func() (GameState, Square) {
 				var b Board
-				b[4][4] = &Piece{Kind: Pawn, Color: Black}  // e5
-				b[3][3] = &Piece{Kind: Pawn, Color: White}  // d4 enemy
-				b[3][5] = &Piece{Kind: Pawn, Color: White}  // f4 enemy
+				b[4][4] = &Piece{Kind: Pawn, Color: Black} // e5
+				b[3][3] = &Piece{Kind: Pawn, Color: White} // d4 enemy
+				b[3][5] = &Piece{Kind: Pawn, Color: White} // f4 enemy
 				return GameState{Board: b, ActiveColor: Black}, sq(4, 4)
 			},
 			want: []string{"e5->d4", "e5->e4", "e5->f4"},
