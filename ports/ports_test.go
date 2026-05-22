@@ -11,7 +11,7 @@ import (
 type noop struct{}
 
 func (noop) SelectMove(core.GameState) core.Move { return core.Move{} }
-func (noop) Render(core.GameState)                {}
+func (noop) Render(core.GameState)               {}
 
 // Compile-time assertions: interface contracts are satisfiable.
 var (

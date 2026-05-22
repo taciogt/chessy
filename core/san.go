@@ -40,6 +40,15 @@ var sanRegex = regexp.MustCompile(
 	`^([KQRBN])([a-h][1-8]|[a-h]|[1-8])?x?([a-h][1-8])[+#]?$`,
 )
 
+// pawnAdvanceRegex matches pawn advance SAN: e4, d3, a8 (optional trailing + or #).
+// Group 1: destination square (e.g. "e4")
+var pawnAdvanceRegex = regexp.MustCompile(`^([a-h][1-8])[+#]?$`)
+
+// pawnCaptureRegex matches pawn capture SAN: exd5, axb6 (optional trailing + or #).
+// Group 1: source file letter (e.g. "e")
+// Group 2: destination square (e.g. "d5")
+var pawnCaptureRegex = regexp.MustCompile(`^([a-h])x([a-h][1-8])[+#]?$`)
+
 var pieceLetterToKind = map[byte]PieceKind{
 	'K': King,
 	'Q': Queen,
@@ -48,14 +57,23 @@ var pieceLetterToKind = map[byte]PieceKind{
 	'N': Knight,
 }
 
-// ParseSAN converts a SAN piece-move string into a Move using state to resolve
-// which piece moves and to validate legality. Pawn moves and castling are out of scope.
+// ParseSAN converts a SAN string into a Move using state to resolve which piece moves
+// and to validate legality. Castling is out of scope.
 func ParseSAN(state GameState, input string) (Move, error) {
 	m := sanRegex.FindStringSubmatch(input)
-	if m == nil {
-		return Move{}, SyntaxError{Input: input}
+	if m != nil {
+		return parsePieceSAN(state, input, m)
 	}
+	if pm := pawnCaptureRegex.FindStringSubmatch(input); pm != nil {
+		return parsePawnCaptureSAN(state, input, pm)
+	}
+	if pm := pawnAdvanceRegex.FindStringSubmatch(input); pm != nil {
+		return parsePawnAdvanceSAN(state, input, pm)
+	}
+	return Move{}, SyntaxError{Input: input}
+}
 
+func parsePieceSAN(state GameState, input string, m []string) (Move, error) {
 	kind := pieceLetterToKind[m[1][0]]
 	disambig := m[2]
 	destStr := m[3]
@@ -81,6 +99,31 @@ func ParseSAN(state GameState, input string) (Move, error) {
 	default:
 		return Move{}, AmbiguousMoveError{Input: input, Candidates: candidates}
 	}
+}
+
+func parsePawnAdvanceSAN(state GameState, input string, pm []string) (Move, error) {
+	destStr := pm[1]
+	dest := Square{File: destStr[0] - 'a', Rank: destStr[1] - '1'}
+	for _, lm := range LegalMoves(state) {
+		p := state.Board[lm.From.Rank][lm.From.File]
+		if p != nil && p.Kind == Pawn && lm.To == dest {
+			return lm, nil
+		}
+	}
+	return Move{}, NoLegalMoveError{Input: input}
+}
+
+func parsePawnCaptureSAN(state GameState, input string, pm []string) (Move, error) {
+	srcFile := pm[1][0] - 'a'
+	destStr := pm[2]
+	dest := Square{File: destStr[0] - 'a', Rank: destStr[1] - '1'}
+	for _, lm := range LegalMoves(state) {
+		p := state.Board[lm.From.Rank][lm.From.File]
+		if p != nil && p.Kind == Pawn && lm.From.File == srcFile && lm.To == dest {
+			return lm, nil
+		}
+	}
+	return Move{}, NoLegalMoveError{Input: input}
 }
 
 // matchesDisambig returns true when from satisfies the disambiguator string.

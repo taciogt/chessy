@@ -40,10 +40,10 @@ func TestStartingBoard_Layout(t *testing.T) {
 	// Rank index 7 = rank "8" (Black back rank).
 	// File index 0 = file "a".
 	tests := []struct {
-		name      string
-		rank      int
-		file      int
-		want      *Piece // nil = expected empty
+		name string
+		rank int
+		file int
+		want *Piece // nil = expected empty
 	}{
 		// White back rank (a1..h1)
 		{"a1 white rook", 0, 0, &Piece{Kind: Rook, Color: White}},

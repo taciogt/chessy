@@ -152,9 +152,9 @@ func TestComputeStatus_Checkmate_KRK(t *testing.T) {
 	//   1 R . . . . . . .   (WR a1 — gives check)
 	//     a b c d e f g h
 	var b Board
-	b[7][0] = &Piece{Kind: King, Color: Black}  // a8
-	b[0][0] = &Piece{Kind: Rook, Color: White}  // a1
-	b[6][2] = &Piece{Kind: King, Color: White}  // c7
+	b[7][0] = &Piece{Kind: King, Color: Black} // a8
+	b[0][0] = &Piece{Kind: Rook, Color: White} // a1
+	b[6][2] = &Piece{Kind: King, Color: White} // c7
 	state := GameState{Board: b, ActiveColor: Black}
 
 	if got := ComputeStatus(state); got != Checkmate {
@@ -171,9 +171,9 @@ func TestComputeStatus_Check_KRK(t *testing.T) {
 	//   1 R . . . . . . .   (WR a1 — gives check)
 	//     a b c d e f g h
 	var b Board
-	b[7][0] = &Piece{Kind: King, Color: Black}  // a8
-	b[0][0] = &Piece{Kind: Rook, Color: White}  // a1
-	b[5][2] = &Piece{Kind: King, Color: White}  // c6
+	b[7][0] = &Piece{Kind: King, Color: Black} // a8
+	b[0][0] = &Piece{Kind: Rook, Color: White} // a1
+	b[5][2] = &Piece{Kind: King, Color: White} // c6
 	state := GameState{Board: b, ActiveColor: Black}
 
 	if got := ComputeStatus(state); got != Check {

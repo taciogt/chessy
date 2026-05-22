@@ -261,6 +261,112 @@ func TestParseSAN_RankDisambiguation(t *testing.T) {
 	}
 }
 
+// --- Pawn moves ---
+
+func TestParseSAN_PawnSingleAdvance(t *testing.T) {
+	b := sparseBoard(map[string]Piece{
+		"e2": {Kind: Pawn, Color: White},
+		"e1": {Kind: King, Color: White},
+		"e8": {Kind: King, Color: Black},
+	})
+	state := GameState{Board: b, ActiveColor: White}
+
+	got, err := ParseSAN(state, "e3")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := Move{From: sqn("e2"), To: sqn("e3")}
+	if got != want {
+		t.Errorf("ParseSAN = %+v, want %+v", got, want)
+	}
+}
+
+func TestParseSAN_PawnDoubleAdvance(t *testing.T) {
+	b := sparseBoard(map[string]Piece{
+		"e2": {Kind: Pawn, Color: White},
+		"e1": {Kind: King, Color: White},
+		"e8": {Kind: King, Color: Black},
+	})
+	state := GameState{Board: b, ActiveColor: White}
+
+	got, err := ParseSAN(state, "e4")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := Move{From: sqn("e2"), To: sqn("e4")}
+	if got != want {
+		t.Errorf("ParseSAN = %+v, want %+v", got, want)
+	}
+}
+
+func TestParseSAN_PawnCapture(t *testing.T) {
+	b := sparseBoard(map[string]Piece{
+		"e4": {Kind: Pawn, Color: White},
+		"d5": {Kind: Pawn, Color: Black},
+		"e1": {Kind: King, Color: White},
+		"e8": {Kind: King, Color: Black},
+	})
+	state := GameState{Board: b, ActiveColor: White}
+
+	got, err := ParseSAN(state, "exd5")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := Move{From: sqn("e4"), To: sqn("d5")}
+	if got != want {
+		t.Errorf("ParseSAN = %+v, want %+v", got, want)
+	}
+}
+
+func TestParseSAN_PawnCheckMarkerStripped(t *testing.T) {
+	b := sparseBoard(map[string]Piece{
+		"e2": {Kind: Pawn, Color: White},
+		"e1": {Kind: King, Color: White},
+		"e8": {Kind: King, Color: Black},
+	})
+	state := GameState{Board: b, ActiveColor: White}
+	want := Move{From: sqn("e2"), To: sqn("e3")}
+
+	for _, input := range []string{"e3+", "e3#"} {
+		got, err := ParseSAN(state, input)
+		if err != nil {
+			t.Fatalf("ParseSAN(%q) unexpected error: %v", input, err)
+		}
+		if got != want {
+			t.Errorf("ParseSAN(%q) = %+v, want %+v", input, got, want)
+		}
+	}
+}
+
+func TestParseSAN_PawnSyntaxError(t *testing.T) {
+	state := GameState{Board: NewStartingBoard(), ActiveColor: White}
+	cases := []string{"e9", "xe4", "9e", "exd9"}
+	for _, input := range cases {
+		t.Run(input, func(t *testing.T) {
+			_, err := ParseSAN(state, input)
+			var se SyntaxError
+			if !errors.As(err, &se) {
+				t.Errorf("ParseSAN(%q) err = %T(%v), want SyntaxError", input, err, err)
+			}
+		})
+	}
+}
+
+func TestParseSAN_PawnCaptureEmptySquare(t *testing.T) {
+	b := sparseBoard(map[string]Piece{
+		"e4": {Kind: Pawn, Color: White},
+		"e1": {Kind: King, Color: White},
+		"e8": {Kind: King, Color: Black},
+	})
+	state := GameState{Board: b, ActiveColor: White}
+
+	_, err := ParseSAN(state, "exd5")
+	var nle NoLegalMoveError
+	if !errors.As(err, &nle) {
+		t.Errorf("ParseSAN err = %T(%v), want NoLegalMoveError", err, err)
+	}
+}
+
 // --- Full-square disambiguation ---
 
 func TestParseSAN_FullSquareDisambiguation(t *testing.T) {
